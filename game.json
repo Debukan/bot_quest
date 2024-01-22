@@ -74,6 +74,10 @@
 			"right",
 			"hello",
 			"mountain"
-		]
+		],
+		"path": {
+			"win": "images/winner.png",
+			"los": "images/looser.png"
+		}
 	}
 }

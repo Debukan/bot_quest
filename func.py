@@ -1,14 +1,14 @@
 import json
 
-def load_data():
+def load_data(path):
     try:
-        f = open("users.json", "r+", encoding='utf-8')
-        user_data = json.load(f, ensure_ascii=False)
+        f = open(path, "r+", encoding='utf-8')
+        data = json.load(f)
         f.close()
-        return user_data
+        return data
     except Exception as ex:
-        user_data = {}
-        return user_data
+        data = {}
+        return data
 
 def save_data(user_data):
     with open("users.json", 'w', encoding='utf-8') as f:

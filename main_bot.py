@@ -1,7 +1,6 @@
 import telebot
 import json
 from func import load_data, save_data
-from game_func import get_game_data
 
 with open("config.json", encoding='utf-8') as f:
     token = json.load(f)
@@ -10,7 +9,7 @@ TOKEN = token['token']
 abouts = token['abouts']
 
 # считывание данных при запуске
-data = load_data()
+data = load_data("users.json")
 
 bot = telebot.TeleBot(token=TOKEN)
 
@@ -28,7 +27,7 @@ commands = {
     '/start': 'Начать общение с ботом',
     '/help': 'Показать эту команды',
     '/about': 'Расскажу о себе',
-    '/hopla': 'Определить какой ты хлеб'
+    '/hopla': 'Начать квест'
 }
 
 # возвращает глобальную переменную
@@ -43,7 +42,7 @@ def get_level(user_id):
 
 # вывод клавиатуры
 def keyboard_handler(message, level):
-    game_data = get_game_data()
+    game_data = load_data("game.json")
     keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
     for key, value in game_data[level]['options'].items():
         button = telebot.types.InlineKeyboardButton(text=key, callback_data=value)
@@ -72,7 +71,7 @@ def get_id(message):
 def start_message(message):
     data = global_data()
     bot.send_message(message.chat.id,'Привет')
-    data = load_data()
+    data = load_data("users.json")
     bot.send_message(message.chat.id, "Напиши /help для помощи!")
 
 
@@ -99,12 +98,14 @@ def callback_query(call):
     user_id = str(get_id(call.message))
     # ставим 1 чтобы команда hopla не работала, пока активны остальные кнопки
     data[user_id]["toggle"] = 1
-    game_data = get_game_data()
+    game_data = load_data("game.json")
     level = call.data
     with open(game_data[level]["path"], "rb") as f:
         bot.send_photo(call.message.chat.id, f)
     if level in game_data["game_result"]["win"]:
         bot.send_message(call.message.chat.id, game_data[level]["description"])
+        with open(game_data["game_result"]["path"]["win"], "rb") as f:
+            bot.send_photo(call.message.chat.id, f)
         bot.send_message(call.message.chat.id, "Вы выиграли!")
         data[user_id]['result'] = "Выиграл"
         data[user_id]['level'] = "start"
@@ -112,6 +113,8 @@ def callback_query(call):
         save_data(data)
     elif level in game_data["game_result"]["lose"]:
         bot.send_message(call.message.chat.id, game_data[level]["description"])
+        with open(game_data["game_result"]["path"]["los"], "rb") as f:
+            bot.send_photo(call.message.chat.id, f)
         bot.send_message(call.message.chat.id, "Вы проиграли!")
         data[user_id]['result'] = "Проиграл"
         data[user_id]['level'] = "start"
@@ -138,18 +141,22 @@ def hopla_handler(message):
     # выводим только если прошлое сообщение не hopla и нет активных кнопок
     if c == 0:
         data[user_id]["toggle"] = 1
-        game_data = get_game_data()
+        game_data = load_data("game.json")
         level = get_level(user_id)
         with open(game_data[level]["path"], "rb") as f:
             bot.send_photo(message.chat.id, f)
         if level in game_data["game_result"]["win"]:
             bot.send_message(message.chat.id, game_data[level]["description"])
+            with open(game_data["game_result"]["path"]["win"], "rb") as f:
+                bot.send_photo(message.chat.id, f)
             bot.send_message(message.chat.id, "Вы выиграли!")
             data[user_id]['result'] = "Выиграл"
             data[user_id]['level'] = "start"
             save_data(data)
         elif level in game_data["game_result"]["lose"]:
             bot.send_message(message.chat.id, game_data[level]["description"])
+            with open(game_data["game_result"]["path"]["los"], "rb") as f:
+                bot.send_photo(message.chat.id, f)
             bot.send_message(message.chat.id, "Вы проиграли!")
             data[user_id]['result'] = "Проигал"
             data[user_id]['level'] = "start"
